@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#define STACK_SIZE 50 // doubleの大きさ
+#define STACK_SIZE 64 // doubleの大きさ
 
 typedef struct {
     double data[STACK_SIZE];
@@ -31,7 +31,7 @@ int main() {
     
     char input[100];
     double result;
-    int help_num = 0; // helpを表示したときに計算結果が表示されないようにするやつ    
+    int help_num = 0;
     while (true) {
         fgets(input, sizeof(input), stdin);
         
@@ -43,11 +43,6 @@ int main() {
             help_num++;
         }
 
-        if (input[0] == 'p') {
-            printf("qで終了だよ！pじゃないよ！！\n");
-            help_num++;
-        }
-        
         char* token = strtok(input, " "); // " "で区切るやつ
         
         while (token != NULL) { //この中でbreakな感じのことが起きると、入力モードに戻される
@@ -71,7 +66,8 @@ int main() {
                         case '*': push(&stack, a * b); break;
                         case '/':
                             if (b == 0) {
-                                printf("エラー：ゼロ除算すんな\n");
+                                printf("エラー：ゼロ除算しようとしないで\n");
+                                help_num++;
                                 break;
                             }
                             push(&stack, a / b);
