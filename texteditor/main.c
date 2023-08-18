@@ -1,30 +1,76 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>  // wait()関数を使用するために追加
-#include <unistd.h>
+#include <string.h>
 
-int main() {
-    // 新しいプロセスを生成
-    pid_t pid = fork();
+#define BUFFER_SIZE 2
 
-    if (pid < 0) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    } else if (pid == 0) {
-        // 子プロセスの処理
-        printf("\033[8;40;100t");  // ターミナルのサイズを設定
-        printf("\033[2J");         // 画面をクリア
-        printf("\033[;H");        // カーソルを画面の先頭に移動
-        printf("\n\n\n\n\n\n");   // 上にスペースを開けて中央に表示
-        printf("\033[1;37m");     // テキストの色を白に設定
-        printf("     Hello, World!\n");
-        printf("\033[0m");        // テキストの色をリセット
-        exit(EXIT_SUCCESS);
+typedef struct _string {
+    char str[BUFFER_SIZE];
+    struct _string *prev;
+    struct _string *next;
+} string;
+
+string* insert(string *from) {
+    string* to = malloc(sizeof(string));
+    if (from->next) {
+        from->next->prev = to;
+        to->next = from->next;
     } else {
-        // 親プロセスの処理
-        wait(NULL);  // 子プロセスの終了を待つ
+        to->next = NULL;
     }
+    if(from){
+        from->next = to;
+    }
+    to->prev = from;
+    return to;
+}
 
-    return 0;
+void file_read(char* filename, string* head) {
+    FILE *fp;
+    char buf[BUFFER_SIZE];
+
+    if((fp = fopen(filename, "r")) == NULL) {
+        printf("[error]can't open\n");
+        return;
+    }
+    string* current = head;
+    while(fgets(buf, sizeof(buf), fp)) {
+        strcpy(current->str, buf);
+        insert(current);
+        current = current->next;
+    }
+    fclose(fp);
+}
+
+int main(int argc, char *argv[]) {
+    printf("\e[2J\e[1;1H");//clear
+    string* head = malloc(sizeof(string));
+    head->prev = NULL;
+    head->next = NULL;
+    if(argc != 2) {
+        printf("[error]illegal args\n");
+    } else {
+        file_read(argv[1], head);
+        string* current = head;
+
+        // normal
+        while(current->next) {
+        printf("%s", current->str);
+        current = current->next;
+        }
+        printf("%s", current->str);
+
+        // reverse
+        printf("\e[31m\e[47m");//color
+        while(current->prev) {
+        printf("%c", current->str[1]);
+        printf("%c", current->str[0]);
+        current = current->prev;
+        }
+        printf("%c", current->str[1]);
+        printf("%c", current->str[0]);
+        printf("\e[39m\e[49m");//reset
+
+    }
+    return EXIT_SUCCESS;
 }
